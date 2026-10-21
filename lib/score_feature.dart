@@ -4,8 +4,7 @@ import 'package:provider/provider.dart';
 import 'demo_box.dart';
 import 'score_model.dart';
 
-/// 03 · Provider exposes ScoreModel at the feature boundary (see main.dart).
-/// ScoreFeature is now stateless: it no longer owns anything.
+/// 04 · Each widget listens only to what it needs.
 class ScoreFeature extends StatelessWidget {
   const ScoreFeature({super.key});
 
@@ -13,7 +12,7 @@ class ScoreFeature extends StatelessWidget {
   Widget build(BuildContext context) {
     final builds = countBuild('ScoreFeature');
     return Scaffold(
-      appBar: AppBar(title: const Text('03 · Provider')),
+      appBar: AppBar(title: const Text('04 · Selector')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 380),
@@ -25,6 +24,7 @@ class ScoreFeature extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ScoreText(),
+                HistoryList(),
                 Controls(),
               ],
             ),
@@ -40,17 +40,46 @@ class ScoreText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Consumer: only this builder reruns when ScoreModel notifies.
-    return Consumer<ScoreModel>(
-      builder: (context, model, child) {
+    // Selector: rebuild only when score changes, not when history does.
+    return Selector<ScoreModel, int>(
+      selector: (_, model) => model.score,
+      builder: (context, score, child) {
         final builds = countBuild('ScoreText');
         return DemoBox(
           name: 'ScoreText',
           builds: builds,
           child: Text(
-            'Score: ${model.score}',
+            'Score: $score',
             style: Theme.of(context).textTheme.headlineMedium,
           ),
+        );
+      },
+    );
+  }
+}
+
+class HistoryList extends StatelessWidget {
+  const HistoryList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<ScoreModel, List<int>>(
+      selector: (_, model) => model.history,
+      builder: (context, history, child) {
+        final builds = countBuild('HistoryList');
+        return DemoBox(
+          name: 'HistoryList',
+          builds: builds,
+          child: history.isEmpty
+              ? const Text('No history yet')
+              : Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final value in history.reversed.take(12))
+                      Chip(label: Text('$value')),
+                  ],
+                ),
         );
       },
     );
@@ -62,16 +91,25 @@ class Controls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // watch subscribes this widget, so Controls rebuilds on every change,
-    // even though it never displays the score. Fixed in 04.
-    final model = context.watch<ScoreModel>();
+    // Controls act; they don't listen. read() inside the callbacks
+    // means this widget never rebuilds when the model changes.
     final builds = countBuild('Controls');
     return DemoBox(
       name: 'Controls',
       builds: builds,
-      child: ElevatedButton(
-        onPressed: model.increment,
-        child: const Text('+'),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ElevatedButton(
+            onPressed: () => context.read<ScoreModel>().increment(),
+            child: const Text('+'),
+          ),
+          const SizedBox(width: 12),
+          OutlinedButton(
+            onPressed: () => context.read<ScoreModel>().clearHistory(),
+            child: const Text('Clear history'),
+          ),
+        ],
       ),
     );
   }
