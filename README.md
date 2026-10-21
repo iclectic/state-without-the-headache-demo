@@ -10,7 +10,7 @@ shows **how many times its build has run**, so the audience can see rebuilds.
 | `03-provider` | Expose feature | `main.dart`: `ChangeNotifierProvider(create: ...)`. ScoreFeature is now stateless and stays at 1. ScoreText uses Consumer. Controls still uses `context.watch`, so its count climbs for no reason. |
 | `04-selector` | Observe | History added. Tap + a few times, then **Clear history**: HistoryList rebuilds, ScoreText doesn't. Controls stays at 1 because it uses `context.read`. |
 
-## One-time setup (do this before the day)
+## One-time setup
 
 ```bash
 cd score_demo
