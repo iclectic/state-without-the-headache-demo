@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'demo_box.dart';
+import 'score_model.dart';
 
-/// 01 · Local state. ScorePage owns `score` and changes it with setState.
+/// 02 · ScoreModel owns the score. ScorePage still creates and disposes it,
+/// and listens with ListenableBuilder (no package yet).
 class ScorePage extends StatefulWidget {
   const ScorePage({super.key});
 
@@ -11,34 +13,38 @@ class ScorePage extends StatefulWidget {
 }
 
 class _ScorePageState extends State<ScorePage> {
-  int score = 0;
+  final ScoreModel model = ScoreModel();
+
+  @override
+  void dispose() {
+    model.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final builds = countBuild('ScorePage');
     return Scaffold(
-      appBar: AppBar(title: const Text('01 · setState')),
+      appBar: AppBar(title: const Text('02 · ScoreModel')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 380),
           child: DemoBox(
             name: 'ScorePage',
             builds: builds,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // The value is passed down through constructors...
-                ScoreText(score: score),
-                // ...and the change comes back up through a callback.
-                Controls(
-                  onIncrement: () {
-                    setState(() {
-                      score++;
-                    });
-                  },
-                ),
-              ],
+            child: ListenableBuilder(
+              listenable: model,
+              builder: (context, _) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ScoreText(score: model.score),
+                    // Widgets express intent; the model does the mutation.
+                    Controls(onIncrement: model.increment),
+                  ],
+                );
+              },
             ),
           ),
         ),
