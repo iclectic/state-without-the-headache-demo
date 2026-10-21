@@ -1,0 +1,19 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.metadata
+pubspec.lock
+
+# Platform folders are generated locally with `flutter create .`
+# and stay put when you switch branches.
+android/
+ios/
+macos/
+linux/
+windows/
+web/
